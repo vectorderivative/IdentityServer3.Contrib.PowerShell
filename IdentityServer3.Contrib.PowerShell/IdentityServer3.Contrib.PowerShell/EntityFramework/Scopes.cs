@@ -4,9 +4,9 @@ using System.Linq;
 using System.Management.Automation;
 using System.Text;
 using System.Threading.Tasks;
-using Thinktecture.IdentityServer.Core.Models;
-using Thinktecture.IdentityServer.EntityFramework;
-using Thinktecture.IdentityServer.EntityFramework.Entities;
+using IdentityServer3.Core.Models;
+using IdentityServer3.EntityFramework;
+using IdentityServer3.EntityFramework.Entities;
 
 namespace IdentityServer3.Contrib.PowerShell.EntityFramework
 {
@@ -68,7 +68,7 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
         {
             var db = new ScopeConfigurationDbContext(this.ConnectionString, this.Schema);
 
-            var scope = new Thinktecture.IdentityServer.Core.Models.Scope
+            var scope = new IdentityServer3.Core.Models.Scope
             {
                 Name = this.Name,
                 DisplayName = this.DisplayName,
@@ -94,7 +94,7 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
         public string Schema { get; set; }
 
         [Parameter(Position = 2, Mandatory = false, HelpMessage = "Scope object to update")]
-        public Thinktecture.IdentityServer.Core.Models.Scope Scope { get; set; }
+        public IdentityServer3.Core.Models.Scope Scope { get; set; }
 
         protected override void ProcessRecord()
         {
@@ -115,7 +115,7 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
                 if (currentscope.Claims.Any(x => x.Name == scope.Name) && !this.Scope.Claims.Any(x => x.Name == scope.Name))
                     entity.ScopeClaims.Remove(entity.ScopeClaims.First(x => x.Name == scope.Name));
                 else if (!currentscope.Claims.Any(x => x.Name == scope.Name) && this.Scope.Claims.Any(x => x.Name == scope.Name))
-                    entity.ScopeClaims.Add(new Thinktecture.IdentityServer.EntityFramework.Entities.ScopeClaim()
+                    entity.ScopeClaims.Add(new IdentityServer3.EntityFramework.Entities.ScopeClaim()
                     {
                         Name = scope.Name,
                         Description = scope.Description,

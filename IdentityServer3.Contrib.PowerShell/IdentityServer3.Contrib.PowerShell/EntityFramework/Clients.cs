@@ -4,9 +4,9 @@ using System.Linq;
 using System.Management.Automation;
 using System.Text;
 using System.Threading.Tasks;
-using Thinktecture.IdentityServer.Core.Models;
-using Thinktecture.IdentityServer.EntityFramework;
-using Thinktecture.IdentityServer.EntityFramework.Entities;
+using IdentityServer3.Core.Models;
+using IdentityServer3.EntityFramework;
+using IdentityServer3.EntityFramework.Entities;
 
 namespace IdentityServer3.Contrib.PowerShell.EntityFramework
 {
@@ -53,7 +53,7 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
 
 
         [Parameter(Position = 2, Mandatory = false, HelpMessage = "Client object to update")]
-        public Thinktecture.IdentityServer.Core.Models.Client Client { get; set; }
+        public IdentityServer3.Core.Models.Client Client { get; set; }
 
         protected override void ProcessRecord()
         {
@@ -92,31 +92,31 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
                 else if (!currentclient.PostLogoutRedirectUris.Contains(uri) && this.Client.PostLogoutRedirectUris.Contains(uri))
                     entity.PostLogoutRedirectUris.Add(new ClientPostLogoutRedirectUri() { Uri = uri });
             }
-            foreach (var gt in currentclient.CustomGrantTypeRestrictions.Union(this.Client.CustomGrantTypeRestrictions).Distinct())
+            foreach (var gt in currentclient.AllowedCustomGrantTypes.Union(this.Client.AllowedCustomGrantTypes).Distinct())
             {
-                if (currentclient.CustomGrantTypeRestrictions.Contains(gt) && !this.Client.CustomGrantTypeRestrictions.Contains(gt))
+                if (currentclient.AllowedCustomGrantTypes.Contains(gt) && !this.Client.AllowedCustomGrantTypes.Contains(gt))
                 {
-                    var gtentity = entity.CustomGrantTypeRestrictions.First(x => x.GrantType == gt);
+                    var gtentity = entity.AllowedCustomGrantTypes.First(x => x.GrantType == gt);
                     db.Entry(gtentity).State = System.Data.Entity.EntityState.Deleted;
-                    entity.CustomGrantTypeRestrictions.Remove(gtentity);
+                    entity.AllowedCustomGrantTypes.Remove(gtentity);
                 }
-                else if (!currentclient.CustomGrantTypeRestrictions.Contains(gt) && this.Client.CustomGrantTypeRestrictions.Contains(gt))
-                    entity.CustomGrantTypeRestrictions.Add(new ClientGrantTypeRestriction() { GrantType = gt });
+                else if (!currentclient.AllowedCustomGrantTypes.Contains(gt) && this.Client.AllowedCustomGrantTypes.Contains(gt))
+                    entity.AllowedCustomGrantTypes.Add(new ClientCustomGrantType { GrantType = gt });
             }
-            foreach (var scope in currentclient.ScopeRestrictions.Union(this.Client.ScopeRestrictions).Distinct())
+            foreach (var scope in currentclient.AllowedScopes.Union(this.Client.AllowedScopes).Distinct())
             {
-                if (currentclient.ScopeRestrictions.Contains(scope) && !this.Client.ScopeRestrictions.Contains(scope))
+                if (currentclient.AllowedScopes.Contains(scope) && !this.Client.AllowedScopes.Contains(scope))
                 {
-                    var scopenetity = entity.ScopeRestrictions.First(x => x.Scope == scope);
+                    var scopenetity = entity.AllowedScopes.First(x => x.Scope == scope);
                     db.Entry(scopenetity).State = System.Data.Entity.EntityState.Deleted;
-                    entity.ScopeRestrictions.Remove(scopenetity);
+                    entity.AllowedScopes.Remove(scopenetity);
                 }
-                else if (!currentclient.ScopeRestrictions.Contains(scope) && this.Client.ScopeRestrictions.Contains(scope))
-                    entity.ScopeRestrictions.Add(new ClientScopeRestriction() { Scope = scope });
+                else if (!currentclient.AllowedScopes.Contains(scope) && this.Client.AllowedScopes.Contains(scope))
+                    entity.AllowedScopes.Add(new ClientScope() { Scope = scope });
             }
             foreach (var provider in currentclient.IdentityProviderRestrictions.Union(this.Client.IdentityProviderRestrictions).Distinct())
             {
-                if (currentclient.IdentityProviderRestrictions.Contains(provider) && !this.Client.ScopeRestrictions.Contains(provider))
+                if (currentclient.IdentityProviderRestrictions.Contains(provider) && !this.Client.AllowedScopes.Contains(provider))
                 {
                     var idpentity = entity.IdentityProviderRestrictions.First(x => x.Provider == provider);
                     db.Entry(idpentity).State = System.Data.Entity.EntityState.Deleted;
@@ -130,10 +130,10 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
                 if (currentclient.ClientSecrets.Any(x => x.Value == secret.Value) && !this.Client.ClientSecrets.Any(x => x.Value == secret.Value))
                     entity.ClientSecrets.Remove(entity.ClientSecrets.First(x => x.Value == secret.Value));
                 else if (!currentclient.ClientSecrets.Any(x => x.Value == secret.Value) && this.Client.ClientSecrets.Any(x => x.Value == secret.Value))
-                    entity.ClientSecrets.Add(new Thinktecture.IdentityServer.EntityFramework.Entities.ClientSecret
+                    entity.ClientSecrets.Add(new IdentityServer3.EntityFramework.Entities.ClientSecret
                     {
-                        ClientSecretType = secret.ClientSecretType,
-                        Description = secret.ClientSecretType,
+                        Type = secret.Type,
+                        Description = secret.Type,
                         Expiration = secret.Expiration,
                         Value = secret.Value
                     });
@@ -143,7 +143,7 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
                 if (currentclient.Claims.Any(x => x.Type == claim.Type) && !this.Client.Claims.Any(x => x.Type == claim.Type))
                     entity.Claims.Remove(entity.Claims.First(x => x.Type == claim.Type && x.Value == claim.Value));
                 else if (!currentclient.Claims.Any(x => x.Type == claim.Type) && this.Client.Claims.Any(x => x.Type == claim.Type))
-                    entity.Claims.Add(new Thinktecture.IdentityServer.EntityFramework.Entities.ClientClaim()
+                    entity.Claims.Add(new IdentityServer3.EntityFramework.Entities.ClientClaim()
                     {
                         Type = claim.Type,
                         Value = claim.Value
@@ -172,12 +172,12 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
         [Parameter(Position = 1, Mandatory = false, HelpMessage = "Schema of the database")]
         public string Schema { get; set; }
 
-        [Parameter(Position = 2, Mandatory = true, HelpMessage = "The id of the client")]
-        public string ClientId { get; set; }
+        //[Parameter(Position = 2, Mandatory = true, HelpMessage = "The id of the client")]
+        //public string ClientId { get; set; }
         [Parameter(Position = 3, Mandatory = true, HelpMessage = "The name of the client")]
         public string ClientName { get; set; }
-        [Parameter(Position = 4, Mandatory = false, HelpMessage = "A list of possible secrets for the client")]
-        public string[] ClientSecrets { get; set; }
+        //[Parameter(Position = 4, Mandatory = false, HelpMessage = "A list of possible secrets for the client")]
+        //public string[] ClientSecrets { get; set; }
         [Parameter(Position = 5, Mandatory = true, HelpMessage = "The flow allowed for the client")]
         public Flows Flow { get; set; }
         [Parameter(Position = 6, Mandatory = false, HelpMessage = "Redirect Uris allowed after login")]
@@ -208,12 +208,14 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
         {
             var db = new ClientConfigurationDbContext(this.ConnectionString, this.Schema);
 
-            var client = new Thinktecture.IdentityServer.Core.Models.Client
+            var client = new IdentityServer3.Core.Models.Client
             {
-                ClientId = this.ClientId,
+                ClientId = NCuid.Cuid.Generate(),
                 ClientName = this.ClientName,
-                ClientSecrets = (from s in this.ClientSecrets
-                                 select new Thinktecture.IdentityServer.Core.Models.ClientSecret(s)).ToList(),
+                ClientSecrets = new List<Secret> {
+                    new IdentityServer3.Core.Models.Secret(Guid.NewGuid().ToString().Sha256())
+                },//(from s in this.ClientSecrets
+                                 //select new IdentityServer3.Core.Models.Secret(s)).ToList(),
                 Flow = this.Flow,
                 Enabled = this.Enabled,
                 RequireConsent = this.RequireConsent,
@@ -222,7 +224,7 @@ namespace IdentityServer3.Contrib.PowerShell.EntityFramework
                 LogoUri = this.LogoUri,
                 RedirectUris = this.RedirectUris,
                 PostLogoutRedirectUris = this.PostLogoutUris,
-                ScopeRestrictions = this.ScopeRestrictions,
+                AllowedScopes = this.ScopeRestrictions,
                 IdentityProviderRestrictions = this.IdentityProviderRestrictions,
 
                 AccessTokenType = this.AccessTokenType,
